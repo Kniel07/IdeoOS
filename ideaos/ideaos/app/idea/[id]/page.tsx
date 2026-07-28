@@ -10,8 +10,9 @@ import { InboxPanel } from "@/components/InboxPanel";
 import { RequirementsPanel } from "@/components/RequirementsPanel";
 import { TaskBoard } from "@/components/TaskBoard";
 import { QuestionsPanel } from "@/components/QuestionsPanel";
+import { ResearchPanel } from "@/components/ResearchPanel";
 
-const TABS = ["Overview", "Inbox", "Requirements", "Tasks", "Questions"] as const;
+const TABS = ["Overview", "Inbox", "Requirements", "Tasks", "Questions", "Research"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function WorkspacePage({ params }: { params: { id: string } }) {
@@ -58,6 +59,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           {tab === "Requirements" && <RequirementsPanel ideaId={idea.id} />}
           {tab === "Tasks" && <TaskBoard ideaId={idea.id} />}
           {tab === "Questions" && <QuestionsPanel ideaId={idea.id} />}
+          {tab === "Research" && <ResearchPanel ideaId={idea.id} />}
         </div>
 
         <AIAssistantPanel ideaId={idea.id} />
