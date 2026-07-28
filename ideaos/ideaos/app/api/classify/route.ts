@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import type { Classification } from "@/lib/types";
 
@@ -29,33 +28,50 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "content is required" }, { status: 400 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GROQ_API_KEY) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY is not configured on the server" },
+      { error: "GROQ_API_KEY is not configured on the server" },
       { status: 500 }
     );
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 300,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: content.trim() }],
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: content.trim() },
+      ],
+    }),
   });
 
-  const textBlock = message.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
+  if (!response.ok) {
+    const detail = await response.text();
+    return NextResponse.json(
+      { error: `Groq request failed (${response.status}): ${detail}` },
+      { status: 502 }
+    );
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content;
+
+  if (!text) {
     return NextResponse.json({ error: "Model returned no text" }, { status: 502 });
   }
 
   let classification: Classification;
   try {
-    classification = JSON.parse(textBlock.text.trim());
+    classification = JSON.parse(text.trim());
   } catch {
     return NextResponse.json(
-      { error: "Model response was not valid JSON", raw: textBlock.text },
+      { error: "Model response was not valid JSON", raw: text },
       { status: 502 }
     );
   }
