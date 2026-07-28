@@ -11,6 +11,7 @@ const COLLECTIONS = [
 ] as const;
 
 type Store = Record<(typeof COLLECTIONS)[number], Record<string, unknown>>;
+type SyncPayload = Partial<Record<(typeof COLLECTIONS)[number], Array<{ id: string }>>>;
 
 const EMPTY_STORE: Store = {
   ideas: {},
@@ -22,9 +23,7 @@ const EMPTY_STORE: Store = {
 };
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json()) as Partial
-    Record<(typeof COLLECTIONS)[number], Array<{ id: string }>>
-  >;
+  const body = (await request.json()) as SyncPayload;
 
   const store = await kvGet<Store>(EMPTY_STORE);
   let written = 0;
